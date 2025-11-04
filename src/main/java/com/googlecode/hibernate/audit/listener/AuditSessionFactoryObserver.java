@@ -24,8 +24,6 @@ import java.util.Map;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.SessionFactoryObserver;
-import org.hibernate.boot.Metadata;
-import org.hibernate.engine.spi.NamedQueryDefinition;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.internal.SessionFactoryImpl;
 import org.hibernate.mapping.PersistentClass;
@@ -134,8 +132,7 @@ public class AuditSessionFactoryObserver implements SessionFactoryObserver {
                 initializeAuditField(session, auditTypeClassName, auditType, identifierProperty.getName(), identifierProperty.getType());
             }
 
-            for (Iterator propertyIterator = classMapping.getPropertyClosureIterator(); propertyIterator.hasNext(); ) {
-                Property property = (Property) propertyIterator.next();
+            for (Property property : classMapping.getPropertyClosure()) {
                 initializeAuditField(session, auditTypeClassName, auditType, property.getName(), property.getType());
             }
         }
@@ -227,7 +224,8 @@ public class AuditSessionFactoryObserver implements SessionFactoryObserver {
         return auditField;
     }
 
-    private void updateMetaModel(Session session) {
+    /*
+    private void updateMetaModel1(Session session) {
         session.flush();
         NamedQueryDefinition selectAuditTypeNamedQueryDefinition = ((SessionFactoryImplementor) session.getSessionFactory()).getNamedQuery(HibernateAudit.SELECT_AUDIT_TYPE_BY_CLASS_NAME);
         NamedQueryDefinition selectAuditTypeFieldNamedQueryDefinition = ((SessionFactoryImplementor) session.getSessionFactory()).getNamedQuery(HibernateAudit.SELECT_AUDIT_TYPE_FIELD_BY_CLASS_NAME_AND_PROPERTY_NAME);
@@ -242,5 +240,18 @@ public class AuditSessionFactoryObserver implements SessionFactoryObserver {
         
         session.getSessionFactory().getCache().evictEntityRegion(AuditType.class.getName());
         session.getSessionFactory().getCache().evictEntityRegion(AuditTypeField.class.getName());
+    } */
+    private void updateMetaModel(Session session) {
+        session.flush();
+
+        SessionFactoryImplementor sfi = (SessionFactoryImplementor) session.getSessionFactory();
+
+        // Directly evict query cache regions (no need for NamedQueryMemento)
+        sfi.getCache().evictQueryRegion(HibernateAudit.SELECT_AUDIT_TYPE_BY_CLASS_NAME);
+        sfi.getCache().evictQueryRegion(HibernateAudit.SELECT_AUDIT_TYPE_FIELD_BY_CLASS_NAME_AND_PROPERTY_NAME);
+
+        // Evict entity regions
+        sfi.getCache().evictEntityData(AuditType.class);
+        sfi.getCache().evictEntityData(AuditTypeField.class);
     }
 }

@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.googlecode</groupId>
   <artifactId>hibernate-audit</artifactId>
-  <version>5.2.11.Final</version>
+  <version>6.6.15.Final</version>
   <packaging>jar</packaging>
 
   <name>hibernate-audit</name>
@@ -42,8 +42,8 @@
     <hibernate.show_sql>true</hibernate.show_sql>
     <hibernate.hbm2ddl.auto>create</hibernate.hbm2ddl.auto>
 
-    <version.hibernate>6.5.3.Final</version.hibernate>
-    <!--<version.emf>2.9.1-v20130827-0309</version.emf>--> <version.emf>2.38.0</version.emf>
+    <version.hibernate>6.6.15.Final</version.hibernate>
+    <version.emf>2.38.0</version.emf>
     <version.teneo>2.0.1-v201310012125</version.teneo>
   </properties>
 
@@ -114,12 +114,13 @@
       <artifactId>slf4j-api</artifactId>
       <version>2.0.13</version>
     </dependency>
+    <!--
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
       <version>1.5.6</version>
       <scope>test</scope>
-    </dependency>
+    </dependency> -->
 
     <!-- Testing -->
     <dependency>
@@ -137,6 +138,11 @@
       <groupId>org.glassfish.jaxb</groupId>
       <artifactId>jaxb-runtime</artifactId>
       <version>2.3.3</version>
+    </dependency>
+    <dependency>
+      <groupId>org.jboss.logging</groupId>
+      <artifactId>jboss-logging</artifactId>
+      <version>3.6.0.Final</version>
     </dependency>
   </dependencies>
 

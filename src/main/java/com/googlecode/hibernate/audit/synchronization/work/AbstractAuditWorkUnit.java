@@ -22,17 +22,13 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.transaction.InvalidTransactionException;
-import javax.transaction.SystemException;
-import javax.transaction.TransactionManager;
-
 import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
-import org.hibernate.engine.spi.NamedQueryDefinition;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SessionImplementor;
 import org.hibernate.engine.transaction.jta.platform.spi.JtaPlatform;
+import org.hibernate.persister.entity.EntityPersister;
 import org.hibernate.type.CompositeType;
 import org.hibernate.type.EntityType;
 import org.hibernate.type.Type;
@@ -51,6 +47,7 @@ import com.googlecode.hibernate.audit.model.property.AuditObjectProperty;
 import com.googlecode.hibernate.audit.model.property.ComponentObjectProperty;
 import com.googlecode.hibernate.audit.model.property.EntityObjectProperty;
 import com.googlecode.hibernate.audit.model.property.SimpleObjectProperty;
+import jakarta.transaction.TransactionManager;
 
 public abstract class AbstractAuditWorkUnit implements AuditWorkUnit {
     private static final Logger log = LoggerFactory.getLogger(AbstractAuditWorkUnit.class);
@@ -59,21 +56,27 @@ public abstract class AbstractAuditWorkUnit implements AuditWorkUnit {
 
     private List<AuditLogicalGroup> auditLogicalGroups = new ArrayList<AuditLogicalGroup>();
 
-    protected void processProperty(Session session, AuditConfiguration auditConfiguration, AuditEvent auditEvent, Object object, String propertyName, Object propertyValue, Type propertyType,
-            AuditObject auditObject) {
-        if (!auditConfiguration.getExtensionManager().getAuditableInformationProvider().isAuditable(getEntityName(), propertyName)) {
+    protected void processProperty(Session session, AuditConfiguration auditConfiguration,
+            AuditEvent auditEvent, Object object, String propertyName, Object propertyValue,
+            Type propertyType, AuditObject auditObject) {
+
+        if (!auditConfiguration.getExtensionManager().getAuditableInformationProvider()
+                               .isAuditable(getEntityName(), propertyName)) {
             return;
         }
         AuditObjectProperty property = null;
 
         if (propertyType.isEntityType()) {
-            property = processEntityProperty(session, auditConfiguration, object, propertyName, propertyValue, propertyType, auditObject);
+            property = processEntityProperty(session, auditConfiguration, object, propertyName,
+                    propertyValue, propertyType, auditObject);
         } else if (propertyType.isCollectionType()) {
             // collection will be handled by collection event listeners
         } else if (propertyType.isComponentType()) {
-            property = processComponentValue(session, auditConfiguration, auditEvent, auditObject, getEntityName(), object, propertyName, propertyValue, (CompositeType) propertyType);
+            property = processComponentValue(session, auditConfiguration, auditEvent, auditObject,
+                    getEntityName(), object, propertyName, propertyValue, (CompositeType) propertyType);
         } else {
-            property = createSimpleValue(session, auditConfiguration, auditObject, getEntityName(), object, propertyName, propertyType, propertyValue);
+            property = createSimpleValue(session, auditConfiguration, auditObject, getEntityName(),
+                    object, propertyName, propertyType, propertyValue);
         }
 
         if (property != null) {
@@ -92,35 +95,54 @@ public abstract class AbstractAuditWorkUnit implements AuditWorkUnit {
         }
     }
 
-    protected EntityObjectProperty processEntityProperty(Session session, AuditConfiguration auditConfiguration, Object object, String propertyName, Object propertyValue, Type propertyType,
+    protected EntityObjectProperty processEntityProperty(Session session, AuditConfiguration auditConfiguration,
+            Object object, String propertyName, Object propertyValue, Type propertyType,
             AuditObject auditObject) {
         String entityName = ((EntityType) propertyType).getAssociatedEntityName();
 
         Serializable id = null;
-        AuditTypeField auditField = HibernateAudit.getAuditField(session, auditConfiguration.getExtensionManager().getAuditableInformationProvider().getAuditTypeClassName(auditConfiguration.getMetadata(), getEntityName()), propertyName);
+        AuditTypeField auditField = HibernateAudit.getAuditField(session,
+                auditConfiguration.getExtensionManager().getAuditableInformationProvider()
+                                  .getAuditTypeClassName(auditConfiguration.getMetadata(), getEntityName()),
+                propertyName);
 
         if (propertyValue != null) {
-            id = session.getSessionFactory().getClassMetadata(entityName).getIdentifier(propertyValue, (SessionImplementor)session);
+            SessionFactoryImplementor sfi =
+                    (SessionFactoryImplementor) session.getSessionFactory();
+            // Get the entity persister by entity name or class
+            EntityPersister persister = sfi.getRuntimeMetamodels()
+                       .getMappingMetamodel()
+                       .getEntityDescriptor(entityName);
+
+            id = (Serializable) persister.getIdentifier(propertyValue, (SessionImplementor) session);
         }
         EntityObjectProperty property = new EntityObjectProperty();
         property.setAuditObject(auditObject);
         property.setAuditField(auditField);
         property.setIndex(null);
-        property.setTargetEntityId(auditConfiguration.getExtensionManager().getPropertyValueConverter().toString(propertyType, id));
+        property.setTargetEntityId(auditConfiguration.getExtensionManager()
+                                                     .getPropertyValueConverter().toString(propertyType, id));
 
         return property;
     }
 
-    protected ComponentObjectProperty processComponentValue(Session session, AuditConfiguration auditConfiguration, AuditEvent auditEvent, AuditObject auditObject, String entityName, Object entity,
+    protected ComponentObjectProperty processComponentValue(Session session, AuditConfiguration auditConfiguration,
+            AuditEvent auditEvent, AuditObject auditObject, String entityName, Object entity,
             String propertyName, Object component, CompositeType componentType) {
-        AuditTypeField auditField = HibernateAudit.getAuditField(session, auditConfiguration.getExtensionManager().getAuditableInformationProvider().getAuditTypeClassName(auditConfiguration.getMetadata(), entityName), propertyName);
+        AuditTypeField auditField = HibernateAudit.getAuditField(session,
+                auditConfiguration.getExtensionManager().getAuditableInformationProvider()
+                                  .getAuditTypeClassName(auditConfiguration.getMetadata(), entityName),
+                propertyName);
 
         ComponentObjectProperty property = new ComponentObjectProperty();
         property.setAuditObject(auditObject);
         property.setAuditField(auditField);
         property.setIndex(null);
         if (component != null) {
-            property.setAuditType(HibernateAudit.getAuditType(session, auditConfiguration.getExtensionManager().getAuditableInformationProvider().getAuditTypeClassName(auditConfiguration.getMetadata(), componentType)));
+            property.setAuditType(HibernateAudit.getAuditType(session,
+                    auditConfiguration.getExtensionManager().getAuditableInformationProvider()
+                                      .getAuditTypeClassName(auditConfiguration.getMetadata(),
+                                              componentType)));
         }
 
         ComponentAuditObject targetComponentAuditObject = null;
@@ -129,7 +151,9 @@ public abstract class AbstractAuditWorkUnit implements AuditWorkUnit {
             targetComponentAuditObject = new ComponentAuditObject();
             targetComponentAuditObject.setAuditEvent(auditEvent);
             targetComponentAuditObject.setParentAuditObject(auditObject);
-            AuditType auditType = HibernateAudit.getAuditType(session, auditConfiguration.getExtensionManager().getAuditableInformationProvider().getAuditTypeClassName(auditConfiguration.getMetadata(), componentType));
+            AuditType auditType = HibernateAudit.getAuditType(session,
+                    auditConfiguration.getExtensionManager().getAuditableInformationProvider()
+                                      .getAuditTypeClassName(auditConfiguration.getMetadata(), componentType));
             targetComponentAuditObject.setAuditType(auditType);
 
             for (int i = 0; i < componentType.getPropertyNames().length; i++) {
@@ -138,7 +162,9 @@ public abstract class AbstractAuditWorkUnit implements AuditWorkUnit {
                 Type componentPropertyType = componentType.getSubtypes()[i];
                 Object componentPropertyValue = componentType.getPropertyValue(component, i, (SessionImplementor) session);
 
-                processProperty(session, auditConfiguration, auditEvent, component, componentPropertyName, componentPropertyValue, componentPropertyType, targetComponentAuditObject);
+                processProperty(session, auditConfiguration, auditEvent, component,
+                        componentPropertyName, componentPropertyValue, componentPropertyType,
+                        targetComponentAuditObject);
             }
         }
         property.setTargetComponentAuditObject(targetComponentAuditObject);
@@ -146,15 +172,20 @@ public abstract class AbstractAuditWorkUnit implements AuditWorkUnit {
         return property;
     }
 
-    protected SimpleObjectProperty createSimpleValue(Session session, AuditConfiguration auditConfiguration, AuditObject auditObject, String entityName, Object entity, String propertyName,
+    protected SimpleObjectProperty createSimpleValue(Session session, AuditConfiguration auditConfiguration,
+            AuditObject auditObject, String entityName, Object entity, String propertyName,
             Type propertyType, Object propertyValue) {
-        AuditTypeField auditField = HibernateAudit.getAuditField(session, auditConfiguration.getExtensionManager().getAuditableInformationProvider().getAuditTypeClassName(auditConfiguration.getMetadata(), entityName), propertyName);
+        AuditTypeField auditField = HibernateAudit.getAuditField(session,
+                auditConfiguration.getExtensionManager().getAuditableInformationProvider()
+                                  .getAuditTypeClassName(auditConfiguration.getMetadata(), entityName),
+                propertyName);
 
         SimpleObjectProperty property = new SimpleObjectProperty();
         property.setAuditObject(auditObject);
         property.setAuditField(auditField);
         property.setIndex(null);
-        property.setValue(auditConfiguration.getExtensionManager().getPropertyValueConverter().toString(propertyType, propertyValue));
+        property.setValue(auditConfiguration.getExtensionManager()
+                                            .getPropertyValueConverter().toString(propertyType, propertyValue));
 
         return property;
     }
@@ -163,9 +194,12 @@ public abstract class AbstractAuditWorkUnit implements AuditWorkUnit {
         return auditLogicalGroups;
     }
 
-    protected AuditLogicalGroup getAuditLogicalGroup(Session session, AuditConfiguration auditConfiguration, AuditEvent auditEvent) {
+    protected AuditLogicalGroup getAuditLogicalGroup(Session session,
+            AuditConfiguration auditConfiguration, AuditEvent auditEvent) {
 
-        AuditLogicalGroup logicalGroup = auditConfiguration.getExtensionManager().getAuditLogicalGroupProvider().getAuditLogicalGroup(session, auditEvent);
+        AuditLogicalGroup logicalGroup = auditConfiguration.getExtensionManager()
+                                                           .getAuditLogicalGroupProvider()
+                                                           .getAuditLogicalGroup(session, auditEvent);
 
         AuditLogicalGroup result = null;
 
@@ -179,16 +213,8 @@ public abstract class AbstractAuditWorkUnit implements AuditWorkUnit {
             if (result == null) {
             	createAuditLogicalGroupException = createAuditLogicalGroup(session, logicalGroup, auditType);
                 // remove the cached query (possibly null) results so that the result after that is not null. 
-                NamedQueryDefinition namedQueryDefinition = ((SessionFactoryImplementor) session.getSessionFactory()).getNamedQuery(HibernateAudit.SELECT_AUDIT_LOCAL_GROUP_BY_AUDIT_TYPE_AND_EXTERNAL_ID);
-                if (namedQueryDefinition.isCacheable()) {
-                    String cacheRegion = ((SessionFactoryImplementor) session.getSessionFactory()).getNamedQuery(HibernateAudit.SELECT_AUDIT_LOCAL_GROUP_BY_AUDIT_TYPE_AND_EXTERNAL_ID).getCacheRegion();
-                    if (cacheRegion != null) {
-                        session.getSessionFactory().getCache().evictQueryRegion(cacheRegion);
-                    } else {
-                        session.getSessionFactory().getCache().evictQueryRegions();
-                    }
-                }
-                
+                SessionFactoryImplementor sfi = (SessionFactoryImplementor) session.getSessionFactory();
+                sfi.getCache().evictQueryRegion(HibernateAudit.SELECT_AUDIT_LOCAL_GROUP_BY_AUDIT_TYPE_AND_EXTERNAL_ID);
                 result = HibernateAudit.getAuditLogicalGroup(session, auditType, externalId);
 
             }
@@ -209,10 +235,16 @@ public abstract class AbstractAuditWorkUnit implements AuditWorkUnit {
         Session newSession = null;
 
         TransactionManager txManager = null;
-        javax.transaction.Transaction suspendedTransaction = null;
+        jakarta.transaction.Transaction suspendedTransaction = null;
 
         try {
-    		JtaPlatform jtaPlatform = ((SessionFactoryImplementor) session.getSessionFactory()).getSettings().getJtaPlatform();
+            SessionFactoryImplementor sfi = (SessionFactoryImplementor) session.getSessionFactory();
+
+            // Access the ServiceRegistry
+            org.hibernate.service.ServiceRegistry serviceRegistry = sfi.getServiceRegistry();
+
+            // Get the JtaPlatform from the registry
+            JtaPlatform jtaPlatform = serviceRegistry.getService(JtaPlatform.class);
     		if (jtaPlatform != null) {
     			txManager = jtaPlatform.retrieveTransactionManager();
     		}
@@ -220,7 +252,7 @@ public abstract class AbstractAuditWorkUnit implements AuditWorkUnit {
             if (txManager != null) {
                 try {
                     suspendedTransaction = txManager.suspend();
-                } catch (SystemException e) {
+                } catch (Exception e) {
                     throw new HibernateException(e);
                 }
             }
@@ -265,9 +297,7 @@ public abstract class AbstractAuditWorkUnit implements AuditWorkUnit {
             if (txManager != null && suspendedTransaction != null) {
                 try {
                     txManager.resume(suspendedTransaction);
-                } catch (SystemException e) {
-                    throw new HibernateException(e);
-                } catch (InvalidTransactionException e) {
+                } catch (Exception e) {
                     throw new HibernateException(e);
                 }
             }

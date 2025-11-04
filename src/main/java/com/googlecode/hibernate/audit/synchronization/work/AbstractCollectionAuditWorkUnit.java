@@ -21,7 +21,11 @@ package com.googlecode.hibernate.audit.synchronization.work;
 import java.io.Serializable;
 
 import org.hibernate.Session;
+import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SessionImplementor;
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
+import org.hibernate.metamodel.mapping.EntityMappingType;
+import org.hibernate.persister.entity.EntityPersister;
 import org.hibernate.type.CompositeType;
 import org.hibernate.type.EntityType;
 import org.hibernate.type.Type;
@@ -40,38 +44,51 @@ import com.googlecode.hibernate.audit.model.property.SimpleObjectProperty;
 
 public abstract class AbstractCollectionAuditWorkUnit extends AbstractAuditWorkUnit {
 
-    protected void processElement(Session session, AuditConfiguration auditConfiguration, Object entityOwner, Object element, Type elementType, String propertyName, long index,
+    protected void processElement(Session session, AuditConfiguration auditConfiguration, Object entityOwner,
+            Object element, Type elementType, String propertyName, long index,
             EntityAuditObject auditObject, AuditEvent auditEvent) {
 
-        AuditTypeField auditField = HibernateAudit.getAuditField(session, auditConfiguration.getExtensionManager().getAuditableInformationProvider().getAuditTypeClassName(auditConfiguration.getMetadata(), getEntityName()), propertyName);
+        AuditTypeField auditField = HibernateAudit.getAuditField(session,
+                auditConfiguration.getExtensionManager().getAuditableInformationProvider()
+                                  .getAuditTypeClassName(auditConfiguration.getMetadata(), getEntityName()), propertyName);
         AuditObjectProperty property = null;
         
         if (elementType.isEntityType()) {
             Serializable id = null;
-
             if (element != null) {
-                id = session.getSessionFactory().getClassMetadata(((EntityType) elementType).getAssociatedEntityName()).getIdentifier(element, (SessionImplementor)session);
+                SessionFactoryImplementor sfi = (SessionFactoryImplementor) session.getSessionFactory();
+                // Get entity name from the element type
+                String entityName = ((EntityType) elementType).getAssociatedEntityName();
+                // Obtain the EntityMappingType or Persister
+                EntityMappingType entityMapping = sfi.getMappingMetamodel().getEntityDescriptor(entityName);
+                EntityPersister persister = entityMapping.getEntityPersister();
+                // Get the identifier
+                id = (Serializable) persister.getIdentifier(element, (SharedSessionContractImplementor) session);
             }
 
             property = new EntityObjectProperty();
             property.setAuditObject(auditObject);
             property.setAuditField(auditField);
-            property.setIndex(new Long(index));
-            ((EntityObjectProperty)property).setTargetEntityId(auditConfiguration.getExtensionManager().getPropertyValueConverter().toString(null, id));
+            property.setIndex(Long.valueOf(index));
+            ((EntityObjectProperty)property).setTargetEntityId(auditConfiguration.getExtensionManager()
+                                                                                 .getPropertyValueConverter()
+                                                                                 .toString(null, id));
         } else if (elementType.isComponentType()) {
         	CompositeType componentType = (CompositeType) elementType;
 
             property = new ComponentObjectProperty();
             property.setAuditObject(auditObject);
             property.setAuditField(auditField);
-            property.setIndex(new Long(index));
+            property.setIndex(Long.valueOf(index));
             ComponentAuditObject targetComponentAuditObject = null;
 
             if (element != null) {
                 targetComponentAuditObject = new ComponentAuditObject();
                 targetComponentAuditObject.setAuditEvent(auditEvent);
                 targetComponentAuditObject.setParentAuditObject(auditObject);
-                AuditType auditComponentType = HibernateAudit.getAuditType(session, auditConfiguration.getExtensionManager().getAuditableInformationProvider().getAuditTypeClassName(auditConfiguration.getMetadata(), elementType));
+                AuditType auditComponentType = HibernateAudit.getAuditType(session,
+                        auditConfiguration.getExtensionManager().getAuditableInformationProvider()
+                                          .getAuditTypeClassName(auditConfiguration.getMetadata(), elementType));
                 targetComponentAuditObject.setAuditType(auditComponentType);
 
                 for (int j = 0; j < componentType.getPropertyNames().length; j++) {
@@ -80,7 +97,8 @@ public abstract class AbstractCollectionAuditWorkUnit extends AbstractAuditWorkU
                     Type componentPropertyType = componentType.getSubtypes()[j];
                     Object componentPropertyValue = componentType.getPropertyValue(element, j, (SessionImplementor) session);
 
-                    processProperty(session, auditConfiguration, auditEvent, element, componentPropertyName, componentPropertyValue, componentPropertyType, targetComponentAuditObject);
+                    processProperty(session, auditConfiguration, auditEvent, element,
+                            componentPropertyName, componentPropertyValue, componentPropertyType, targetComponentAuditObject);
                 }
             }
             ((ComponentObjectProperty)property).setTargetComponentAuditObject(targetComponentAuditObject);
@@ -91,8 +109,10 @@ public abstract class AbstractCollectionAuditWorkUnit extends AbstractAuditWorkU
             property = new SimpleObjectProperty();
             property.setAuditObject(auditObject);
             property.setAuditField(auditField);
-            property.setIndex(new Long(index));
-            ((SimpleObjectProperty)property).setValue(auditConfiguration.getExtensionManager().getPropertyValueConverter().toString(null, element));
+            property.setIndex(Long.valueOf(index));
+            ((SimpleObjectProperty)property).setValue(auditConfiguration.getExtensionManager()
+                                                                        .getPropertyValueConverter()
+                                                                        .toString(null, element));
         }
         
         if (property != null) {

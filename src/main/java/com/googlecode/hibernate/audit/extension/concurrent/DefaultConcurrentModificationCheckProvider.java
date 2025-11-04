@@ -38,7 +38,7 @@ public class DefaultConcurrentModificationCheckProvider implements ConcurrentMod
 				}
 				// session.lock(storedAuditLogicalGroup, LockMode.UPGRADE);
 				// not the audit logical group is not immutable
-				session.refresh(storedAuditLogicalGroup, LockMode.UPGRADE);
+				session.refresh(storedAuditLogicalGroup, LockMode.PESSIMISTIC_WRITE);
 			}
 			try {
 				concurrentModificationCheck(auditConfiguration, session, auditTransaction, loadAuditTransactionId);

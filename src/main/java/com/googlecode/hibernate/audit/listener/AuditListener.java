@@ -18,6 +18,8 @@
  */
 package com.googlecode.hibernate.audit.listener;
 
+import java.io.Serializable;
+
 import org.hibernate.HibernateException;
 import org.hibernate.boot.Metadata;
 import org.hibernate.engine.config.spi.ConfigurationService;
@@ -55,8 +57,13 @@ import com.googlecode.hibernate.audit.synchronization.work.RemoveCollectionAudit
 import com.googlecode.hibernate.audit.synchronization.work.UpdateAuditWorkUnit;
 import com.googlecode.hibernate.audit.synchronization.work.UpdateCollectionAuditWorkUnit;
 
-public class AuditListener implements PostInsertEventListener, PostUpdateEventListener, PostDeleteEventListener, PreCollectionUpdateEventListener, PreCollectionRemoveEventListener,
-        PostCollectionRecreateEventListener {
+public class AuditListener implements PostInsertEventListener, PostUpdateEventListener,
+        PostDeleteEventListener, PreCollectionUpdateEventListener,
+        PreCollectionRemoveEventListener,PostCollectionRecreateEventListener {
+    @Override
+    public boolean requiresPostCommitHandling(EntityPersister persister) {
+        return false;
+    }
 
     private static final Logger log = LoggerFactory.getLogger(AuditListener.class);
     private AuditConfiguration auditConfiguration;
@@ -68,9 +75,12 @@ public class AuditListener implements PostInsertEventListener, PostUpdateEventLi
         }
     }
 
-    public void initialize(SessionFactoryImplementor sessionFactory, Metadata metadata, SessionFactoryServiceRegistry serviceRegistry) {
+    public void initialize(SessionFactoryImplementor sessionFactory,
+            Metadata metadata, SessionFactoryServiceRegistry serviceRegistry) {
         try {
-            recordEmptyCollectionsOnInsert = serviceRegistry.getService(ConfigurationService.class).getSetting(HibernateAudit.AUDIT_RECORD_EMPTY_COLLECTIONS_ON_INSERT_PROPERTY, StandardConverters.BOOLEAN, true);
+            recordEmptyCollectionsOnInsert = serviceRegistry.getService(ConfigurationService.class)
+                                                            .getSetting(HibernateAudit.AUDIT_RECORD_EMPTY_COLLECTIONS_ON_INSERT_PROPERTY,
+                                                                    StandardConverters.BOOLEAN, true);
 
             auditConfiguration = ConfigurationHolder.getAuditConfiguration(sessionFactory);
 
@@ -104,7 +114,9 @@ public class AuditListener implements PostInsertEventListener, PostUpdateEventLi
     }
 
     private void processAuditConfigurationObserver(SessionFactoryServiceRegistry serviceRegistry) {
-        String observerClazzProperty = serviceRegistry.getService(ConfigurationService.class).getSetting(HibernateAudit.AUDIT_CONFIGURATION_OBSERVER_PROPERTY, StandardConverters.STRING, null);
+        String observerClazzProperty = serviceRegistry.getService(ConfigurationService.class)
+                                                      .getSetting(HibernateAudit.AUDIT_CONFIGURATION_OBSERVER_PROPERTY,
+                                                              StandardConverters.STRING, null);
 
         if (observerClazzProperty != null) {
             ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
@@ -143,7 +155,8 @@ public class AuditListener implements PostInsertEventListener, PostUpdateEventLi
             if (auditConfiguration.getExtensionManager().getAuditableInformationProvider().isAuditable(entityName)) {
                 AuditProcess auditProcess = auditConfiguration.getAuditProcessManager().get(event.getSession());
 
-                AuditWorkUnit workUnit = new InsertAuditWorkUnit(entityName, event.getId(), event.getEntity(), event.getPersister());
+                AuditWorkUnit workUnit = new InsertAuditWorkUnit(entityName, (Serializable) event.getId(),
+                        event.getEntity(), event.getPersister());
                 auditProcess.addWorkUnit(workUnit);
             }
         } catch (RuntimeException e) {
@@ -161,7 +174,8 @@ public class AuditListener implements PostInsertEventListener, PostUpdateEventLi
             if (auditConfiguration.getExtensionManager().getAuditableInformationProvider().isAuditable(entityName)) {
                 AuditProcess auditProcess = auditConfiguration.getAuditProcessManager().get(event.getSession());
 
-                AuditWorkUnit workUnit = new UpdateAuditWorkUnit(entityName, event.getId(), event.getEntity(), event.getPersister(), event.getOldState(), event.getState());
+                AuditWorkUnit workUnit = new UpdateAuditWorkUnit(entityName, (Serializable)event.getId(),
+                        event.getEntity(), event.getPersister(), event.getOldState(), event.getState());
                 auditProcess.addWorkUnit(workUnit);
             }
         } catch (RuntimeException e) {
@@ -179,7 +193,8 @@ public class AuditListener implements PostInsertEventListener, PostUpdateEventLi
             if (auditConfiguration.getExtensionManager().getAuditableInformationProvider().isAuditable(entityName)) {
                 AuditProcess auditProcess = auditConfiguration.getAuditProcessManager().get(event.getSession());
 
-                AuditWorkUnit workUnit = new DeleteAuditWorkUnit(entityName, event.getId(), event.getEntity(), event.getPersister());
+                AuditWorkUnit workUnit = new DeleteAuditWorkUnit(entityName, (Serializable)event.getId(),
+                        event.getEntity(), event.getPersister());
                 auditProcess.addWorkUnit(workUnit);
             }
         } catch (RuntimeException e) {
@@ -200,7 +215,8 @@ public class AuditListener implements PostInsertEventListener, PostUpdateEventLi
 
             if (auditConfiguration.getExtensionManager().getAuditableInformationProvider().isAuditable(entityName) && (recordEmptyCollectionsOnInsert || !event.getCollection().empty())) {
                 AuditProcess auditProcess = auditConfiguration.getAuditProcessManager().get(event.getSession());
-                AuditWorkUnit workUnit = new InsertCollectionAuditWorkUnit(entityName, event.getAffectedOwnerIdOrNull(), event.getAffectedOwnerOrNull(), event.getCollection());
+                AuditWorkUnit workUnit = new InsertCollectionAuditWorkUnit(entityName, (Serializable)event.getAffectedOwnerIdOrNull(),
+                        event.getAffectedOwnerOrNull(), event.getCollection());
                 auditProcess.addWorkUnit(workUnit);
             }
         } catch (RuntimeException e) {
@@ -218,7 +234,8 @@ public class AuditListener implements PostInsertEventListener, PostUpdateEventLi
             if (auditConfiguration.getExtensionManager().getAuditableInformationProvider().isAuditable(entityName)) {
 
                 AuditProcess auditProcess = auditConfiguration.getAuditProcessManager().get(event.getSession());
-                AuditWorkUnit workUnit = new UpdateCollectionAuditWorkUnit(entityName, event.getAffectedOwnerIdOrNull(), event.getAffectedOwnerOrNull(), event.getCollection());
+                AuditWorkUnit workUnit = new UpdateCollectionAuditWorkUnit(entityName, (Serializable)event.getAffectedOwnerIdOrNull(),
+                        event.getAffectedOwnerOrNull(), event.getCollection());
 
                 auditProcess.addWorkUnit(workUnit);
             }
@@ -236,7 +253,8 @@ public class AuditListener implements PostInsertEventListener, PostUpdateEventLi
 
             if (auditConfiguration.getExtensionManager().getAuditableInformationProvider().isAuditable(entityName)) {
                 AuditProcess auditProcess = auditConfiguration.getAuditProcessManager().get(event.getSession());
-                AuditWorkUnit workUnit = new RemoveCollectionAuditWorkUnit(entityName, event.getAffectedOwnerIdOrNull(), event.getAffectedOwnerOrNull(), event.getCollection());
+                AuditWorkUnit workUnit = new RemoveCollectionAuditWorkUnit(entityName, (Serializable)event.getAffectedOwnerIdOrNull(),
+                        event.getAffectedOwnerOrNull(), event.getCollection());
 
                 auditProcess.addWorkUnit(workUnit);
             }
