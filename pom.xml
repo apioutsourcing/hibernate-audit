@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.googlecode</groupId>
   <artifactId>hibernate-audit</artifactId>
-  <version>6.6.15.Final</version>
+  <version>6.6.33.Final</version>
   <packaging>jar</packaging>
 
   <name>hibernate-audit</name>
@@ -42,7 +42,7 @@
     <hibernate.show_sql>true</hibernate.show_sql>
     <hibernate.hbm2ddl.auto>create</hibernate.hbm2ddl.auto>
 
-    <version.hibernate>6.6.15.Final</version.hibernate>
+    <version.hibernate>6.6.33.Final</version.hibernate>
     <version.emf>2.38.0</version.emf>
     <version.teneo>2.0.1-v201310012125</version.teneo>
   </properties>
@@ -52,10 +52,6 @@
       <id>central</id>
       <url>https://repo1.maven.org/maven2/</url>
     </repository>
-    <!--<repository>
-      <id>eclipse-releases</id>
-      <url>https://repo.eclipse.org/content/groups/releases/</url>
-    </repository>-->
   </repositories>
 
   <dependencies>
@@ -70,7 +66,6 @@
       <artifactId>hibernate-jcache</artifactId>
       <version>6.5.3.Final</version> <!-- match your Hibernate version -->
     </dependency>
-
     <!-- Ehcache 3 (JCache provider) -->
     <dependency>
       <groupId>org.ehcache</groupId>
@@ -114,13 +109,6 @@
       <artifactId>slf4j-api</artifactId>
       <version>2.0.13</version>
     </dependency>
-    <!--
-    <dependency>
-      <groupId>ch.qos.logback</groupId>
-      <artifactId>logback-classic</artifactId>
-      <version>1.5.6</version>
-      <scope>test</scope>
-    </dependency> -->
 
     <!-- Testing -->
     <dependency>
@@ -139,13 +127,7 @@
       <artifactId>jaxb-runtime</artifactId>
       <version>2.3.3</version>
     </dependency>
-    <dependency>
-      <groupId>org.jboss.logging</groupId>
-      <artifactId>jboss-logging</artifactId>
-      <version>3.6.0.Final</version>
-    </dependency>
   </dependencies>
-
   <build>
     <plugins>
       <!-- Modern compiler -->
