@@ -6,17 +6,17 @@ import org.hibernate.event.service.spi.DuplicationStrategy;
 import org.hibernate.event.service.spi.EventListenerRegistry;
 import org.hibernate.event.spi.EventType;
 import org.hibernate.integrator.spi.Integrator;
-import org.hibernate.internal.CoreMessageLogger;
 import org.hibernate.service.spi.SessionFactoryServiceRegistry;
-import org.jboss.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.googlecode.hibernate.audit.configuration.ConfigurationHolder;
 import com.googlecode.hibernate.audit.listener.AuditListener;
 import com.googlecode.hibernate.audit.listener.AuditSessionFactoryObserver;
 
 public class AuditIntegrator implements Integrator {
-    private static final CoreMessageLogger LOG = Logger.getMessageLogger(CoreMessageLogger.class,
-            AuditIntegrator.class.getName());
+
+    private static final Logger LOG = LoggerFactory.getLogger(AuditIntegrator.class);
 
     private static final String AUTO_REGISTER = "com.googlecode.hibernate.audit.listener.autoRegister";
 
