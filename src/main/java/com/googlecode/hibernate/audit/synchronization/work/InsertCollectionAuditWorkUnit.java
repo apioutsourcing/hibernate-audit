@@ -71,7 +71,7 @@ public class InsertCollectionAuditWorkUnit extends AbstractCollectionAuditWorkUn
     }
 
     private void initializeAuditEvents(Session session, AuditConfiguration auditConfiguration) {
-        String role = collectionPersister.getCollectionMetadata().getRole();
+        String role = collectionPersister.getRole();
         String propertyName = role.substring(role.lastIndexOf('.') != -1 ? role.lastIndexOf('.') + 1 : 0, role.length());
 
         if (!auditConfiguration.getExtensionManager().getAuditableInformationProvider().isAuditable(entityName, propertyName) || !persistentCollection.wasInitialized()) {
@@ -90,7 +90,7 @@ public class InsertCollectionAuditWorkUnit extends AbstractCollectionAuditWorkUn
         auditObject.setTargetEntityId(id == null ? null : id.toString());
         auditEvent.getAuditObjects().add(auditObject);
 
-        Type elementType = collectionPersister.getCollectionMetadata().getElementType();
+        Type elementType = collectionPersister.getElementType();
 
         Iterator<? extends Object> iterator = persistentCollection.entries(collectionPersister);
 

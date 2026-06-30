@@ -134,7 +134,7 @@ public class AuditProcess implements BeforeTransactionCompletionProcess {
 
 			concurrencyModificationCheck(session, auditLogicalGroups, auditTransaction);
 
-			session.save(auditTransaction);
+			session.persist(auditTransaction);
 			for (AuditLogicalGroup storedAuditLogicalGroup : auditLogicalGroups) {
 				storedAuditLogicalGroup.setLastUpdatedAuditTransactionId(auditTransaction.getId());
 			}

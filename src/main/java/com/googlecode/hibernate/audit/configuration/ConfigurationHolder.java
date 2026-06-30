@@ -1,9 +1,9 @@
 package com.googlecode.hibernate.audit.configuration;
 
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.hibernate.engine.spi.SessionFactoryImplementor;
-import org.hibernate.internal.util.collections.ConcurrentReferenceHashMap;
 
 import com.googlecode.hibernate.audit.listener.AuditListener;
 
@@ -13,8 +13,8 @@ import com.googlecode.hibernate.audit.listener.AuditListener;
  * Created by EugenMaysyuk on 8/3/2017.
  */
 public class ConfigurationHolder {
-    private static final Map<SessionFactoryImplementor, AuditConfiguration> AUDIT_CONFIGURATION_MAP = new ConcurrentReferenceHashMap<>(16, ConcurrentReferenceHashMap.ReferenceType.WEAK, ConcurrentReferenceHashMap.ReferenceType.STRONG);
-    private static final Map<SessionFactoryImplementor, AuditListener> AUDIT_LISTENER_MAP = new ConcurrentReferenceHashMap<>(16, ConcurrentReferenceHashMap.ReferenceType.WEAK, ConcurrentReferenceHashMap.ReferenceType.STRONG);
+    private static final Map<SessionFactoryImplementor, AuditConfiguration> AUDIT_CONFIGURATION_MAP = new ConcurrentHashMap<>(16);
+    private static final Map<SessionFactoryImplementor, AuditListener> AUDIT_LISTENER_MAP = new ConcurrentHashMap<>(16);
 
     public static AuditConfiguration putAuditConfiguration(SessionFactoryImplementor sessionFactory, AuditConfiguration auditConfiguration) {
         return AUDIT_CONFIGURATION_MAP.put(sessionFactory, auditConfiguration);
