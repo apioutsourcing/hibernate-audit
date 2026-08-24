@@ -23,7 +23,6 @@ import com.googlecode.hibernate.audit.util.ConcurrentReferenceHashMap;
 import org.hibernate.Transaction;
 import org.hibernate.action.spi.AfterTransactionCompletionProcess;
 import org.hibernate.action.spi.BeforeTransactionCompletionProcess;
-import org.hibernate.engine.spi.SessionImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.event.spi.EventSource;
 
@@ -47,9 +46,10 @@ public final class AuditProcessManager {
             auditProcess = new AuditProcess( auditConfiguration, session );
             auditProcesses.put(transaction, auditProcess);
 
-            session.getActionQueue().registerProcess(new BeforeTransactionCompletionProcess() {
+            // Hibernate 7.2 replaced ActionQueue.registerProcess with registerCallback.
+            session.getActionQueue().registerCallback(new BeforeTransactionCompletionProcess() {
                 @Override
-                public void doBeforeTransactionCompletion(SessionImplementor session) {
+                public void doBeforeTransactionCompletion(SharedSessionContractImplementor session) {
                     AuditProcess process = auditProcesses.get(transaction);
                     if (process != null) {
                         process.doBeforeTransactionCompletion(session);
@@ -57,7 +57,7 @@ public final class AuditProcessManager {
                 }
             });
 
-            session.getActionQueue().registerProcess(new AfterTransactionCompletionProcess() {
+            session.getActionQueue().registerCallback(new AfterTransactionCompletionProcess() {
                 @Override
                 public void doAfterTransactionCompletion(boolean success, SharedSessionContractImplementor session) {
                     auditProcesses.remove(transaction);
