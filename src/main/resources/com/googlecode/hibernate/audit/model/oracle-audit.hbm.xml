@@ -261,7 +261,7 @@
 			entity-name="com.googlecode.hibernate.audit.model.property.ComponentObjectProperty"
 			discriminator-value="C">
 
-			<many-to-one name="targetComponentAuditObject" cascade="save-update"
+			<many-to-one name="targetComponentAuditObject" cascade="persist,merge"
 				class="com.googlecode.hibernate.audit.model.object.ComponentAuditObject"
 				lazy="proxy">
 				<column name="`TARGET_COMPONENT_AUDIT_OBJ_ID`" sql-type="NUMBER(30)" />

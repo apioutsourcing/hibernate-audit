@@ -64,13 +64,17 @@
     <dependency>
       <groupId>org.hibernate.orm</groupId>
       <artifactId>hibernate-jcache</artifactId>
-      <version>6.5.3.Final</version> <!-- match your Hibernate version -->
+      <version>${version.hibernate}</version>
+      <!-- test-only: the library itself needs no cache provider, the host application supplies one -->
+      <scope>test</scope>
     </dependency>
     <!-- Ehcache 3 (JCache provider) -->
     <dependency>
       <groupId>org.ehcache</groupId>
       <artifactId>ehcache</artifactId>
       <version>3.10.8</version>
+      <!-- test-only: a second JSR-107 CachingProvider breaks hosts that already register one -->
+      <scope>test</scope>
       <exclusions>
         <exclusion>
           <groupId>org.glassfish.jaxb</groupId>
@@ -90,18 +94,19 @@
       <groupId>org.eclipse.emf</groupId>
       <artifactId>org.eclipse.emf.teneo.hibernate</artifactId>
       <version>${version.teneo}</version>
-      <!--<scope>test</scope>-->
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.eclipse.emf</groupId>
       <artifactId>org.eclipse.emf.ecore</artifactId>
       <version>${version.emf}</version>
-      <!--<scope>test</scope>-->
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.eclipse.emf</groupId>
       <artifactId>org.eclipse.emf.ecore.xmi</artifactId>
       <version>${version.emf}</version>
+      <scope>test</scope>
     </dependency>
     <!-- Logging -->
     <dependency>
@@ -121,11 +126,13 @@
       <groupId>javax.xml.bind</groupId>
       <artifactId>jaxb-api</artifactId>
       <version>2.3.1</version>
+          <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.glassfish.jaxb</groupId>
       <artifactId>jaxb-runtime</artifactId>
       <version>2.3.3</version>
+          <scope>test</scope>
     </dependency>
   </dependencies>
   <build>
