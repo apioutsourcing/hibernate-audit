@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.googlecode</groupId>
   <artifactId>hibernate-audit</artifactId>
-  <version>7.2.19.Final</version>
+  <version>7.4.5.Final</version>
   <packaging>jar</packaging>
 
   <name>hibernate-audit</name>
@@ -42,7 +42,7 @@
     <hibernate.show_sql>true</hibernate.show_sql>
     <hibernate.hbm2ddl.auto>create</hibernate.hbm2ddl.auto>
 
-    <version.hibernate>7.2.19.Final</version.hibernate>
+    <version.hibernate>7.4.5.Final</version.hibernate>
     <version.emf>2.38.0</version.emf>
     <version.teneo>2.0.1-v201310012125</version.teneo>
   </properties>
