@@ -153,7 +153,7 @@ public class AuditListener implements PostInsertEventListener, PostUpdateEventLi
             String entityName = event.getPersister().getEntityName();
 
             if (auditConfiguration.getExtensionManager().getAuditableInformationProvider().isAuditable(entityName)) {
-                AuditProcess auditProcess = auditConfiguration.getAuditProcessManager().get(event.getSession());
+                AuditProcess auditProcess = auditConfiguration.getAuditProcessManager().get(event.getSession().asEventSource());
 
                 AuditWorkUnit workUnit = new InsertAuditWorkUnit(entityName, (Serializable) event.getId(),
                         event.getEntity(), event.getPersister());
@@ -172,7 +172,7 @@ public class AuditListener implements PostInsertEventListener, PostUpdateEventLi
             String entityName = event.getPersister().getEntityName();
 
             if (auditConfiguration.getExtensionManager().getAuditableInformationProvider().isAuditable(entityName)) {
-                AuditProcess auditProcess = auditConfiguration.getAuditProcessManager().get(event.getSession());
+                AuditProcess auditProcess = auditConfiguration.getAuditProcessManager().get(event.getSession().asEventSource());
 
                 AuditWorkUnit workUnit = new UpdateAuditWorkUnit(entityName, (Serializable)event.getId(),
                         event.getEntity(), event.getPersister(), event.getOldState(), event.getState());
@@ -191,7 +191,7 @@ public class AuditListener implements PostInsertEventListener, PostUpdateEventLi
             String entityName = event.getPersister().getEntityName();
 
             if (auditConfiguration.getExtensionManager().getAuditableInformationProvider().isAuditable(entityName)) {
-                AuditProcess auditProcess = auditConfiguration.getAuditProcessManager().get(event.getSession());
+                AuditProcess auditProcess = auditConfiguration.getAuditProcessManager().get(event.getSession().asEventSource());
 
                 AuditWorkUnit workUnit = new DeleteAuditWorkUnit(entityName, (Serializable)event.getId(),
                         event.getEntity(), event.getPersister());
@@ -214,7 +214,7 @@ public class AuditListener implements PostInsertEventListener, PostUpdateEventLi
             String entityName = event.getAffectedOwnerEntityName();
 
             if (auditConfiguration.getExtensionManager().getAuditableInformationProvider().isAuditable(entityName) && (recordEmptyCollectionsOnInsert || !event.getCollection().empty())) {
-                AuditProcess auditProcess = auditConfiguration.getAuditProcessManager().get(event.getSession());
+                AuditProcess auditProcess = auditConfiguration.getAuditProcessManager().get(event.getSession().asEventSource());
                 AuditWorkUnit workUnit = new InsertCollectionAuditWorkUnit(entityName, (Serializable)event.getAffectedOwnerIdOrNull(),
                         event.getAffectedOwnerOrNull(), event.getCollection());
                 auditProcess.addWorkUnit(workUnit);
@@ -233,7 +233,7 @@ public class AuditListener implements PostInsertEventListener, PostUpdateEventLi
 
             if (auditConfiguration.getExtensionManager().getAuditableInformationProvider().isAuditable(entityName)) {
 
-                AuditProcess auditProcess = auditConfiguration.getAuditProcessManager().get(event.getSession());
+                AuditProcess auditProcess = auditConfiguration.getAuditProcessManager().get(event.getSession().asEventSource());
                 AuditWorkUnit workUnit = new UpdateCollectionAuditWorkUnit(entityName, (Serializable)event.getAffectedOwnerIdOrNull(),
                         event.getAffectedOwnerOrNull(), event.getCollection());
 
@@ -252,7 +252,7 @@ public class AuditListener implements PostInsertEventListener, PostUpdateEventLi
             String entityName = event.getAffectedOwnerEntityName();
 
             if (auditConfiguration.getExtensionManager().getAuditableInformationProvider().isAuditable(entityName)) {
-                AuditProcess auditProcess = auditConfiguration.getAuditProcessManager().get(event.getSession());
+                AuditProcess auditProcess = auditConfiguration.getAuditProcessManager().get(event.getSession().asEventSource());
                 AuditWorkUnit workUnit = new RemoveCollectionAuditWorkUnit(entityName, (Serializable)event.getAffectedOwnerIdOrNull(),
                         event.getAffectedOwnerOrNull(), event.getCollection());
 

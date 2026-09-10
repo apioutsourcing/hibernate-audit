@@ -30,6 +30,7 @@ import org.hibernate.FlushMode;
 import org.hibernate.Session;
 import org.hibernate.action.spi.BeforeTransactionCompletionProcess;
 import org.hibernate.engine.spi.SessionImplementor;
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.resource.jdbc.spi.PhysicalConnectionHandlingMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,6 +56,13 @@ public class AuditProcess implements BeforeTransactionCompletionProcess {
 	public void addWorkUnit(AuditWorkUnit workUnit) {
 		workUnit.init(auditedSession, auditConfiguration);
 		workUnits.add(workUnit);
+	}
+
+	// Hibernate 7.2 moved the abstract hook onto TransactionCompletionCallbacks.BeforeCompletionCallback,
+	// which hands back the widened session type; narrow it and keep the existing logic unchanged.
+	@Override
+	public void doBeforeTransactionCompletion(SharedSessionContractImplementor session) {
+		doBeforeTransactionCompletion(session.asEventSource());
 	}
 
 	public void doBeforeTransactionCompletion(SessionImplementor session) {
@@ -134,7 +142,7 @@ public class AuditProcess implements BeforeTransactionCompletionProcess {
 
 			concurrencyModificationCheck(session, auditLogicalGroups, auditTransaction);
 
-			session.save(auditTransaction);
+			session.persist(auditTransaction);
 			for (AuditLogicalGroup storedAuditLogicalGroup : auditLogicalGroups) {
 				storedAuditLogicalGroup.setLastUpdatedAuditTransactionId(auditTransaction.getId());
 			}

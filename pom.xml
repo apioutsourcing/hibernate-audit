@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.googlecode</groupId>
   <artifactId>hibernate-audit</artifactId>
-  <version>6.6.33.Final</version>
+  <version>7.4.5.Final</version>
   <packaging>jar</packaging>
 
   <name>hibernate-audit</name>
@@ -19,8 +19,8 @@
   </licenses>
 
   <properties>
-    <maven.compiler.source>11</maven.compiler.source>
-    <maven.compiler.target>11</maven.compiler.target>
+    <maven.compiler.source>17</maven.compiler.source>
+    <maven.compiler.target>17</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
     <!-- The 'main' persistence unit definition, used to persist test data
@@ -42,7 +42,7 @@
     <hibernate.show_sql>true</hibernate.show_sql>
     <hibernate.hbm2ddl.auto>create</hibernate.hbm2ddl.auto>
 
-    <version.hibernate>6.6.33.Final</version.hibernate>
+    <version.hibernate>7.4.5.Final</version.hibernate>
     <version.emf>2.38.0</version.emf>
     <version.teneo>2.0.1-v201310012125</version.teneo>
   </properties>
@@ -64,13 +64,17 @@
     <dependency>
       <groupId>org.hibernate.orm</groupId>
       <artifactId>hibernate-jcache</artifactId>
-      <version>6.5.3.Final</version> <!-- match your Hibernate version -->
+      <version>${version.hibernate}</version>
+      <!-- test-only: the library itself needs no cache provider, the host application supplies one -->
+      <scope>test</scope>
     </dependency>
     <!-- Ehcache 3 (JCache provider) -->
     <dependency>
       <groupId>org.ehcache</groupId>
       <artifactId>ehcache</artifactId>
       <version>3.10.8</version>
+      <!-- test-only: a second JSR-107 CachingProvider breaks hosts that already register one -->
+      <scope>test</scope>
       <exclusions>
         <exclusion>
           <groupId>org.glassfish.jaxb</groupId>
@@ -90,18 +94,19 @@
       <groupId>org.eclipse.emf</groupId>
       <artifactId>org.eclipse.emf.teneo.hibernate</artifactId>
       <version>${version.teneo}</version>
-      <!--<scope>test</scope>-->
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.eclipse.emf</groupId>
       <artifactId>org.eclipse.emf.ecore</artifactId>
       <version>${version.emf}</version>
-      <!--<scope>test</scope>-->
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.eclipse.emf</groupId>
       <artifactId>org.eclipse.emf.ecore.xmi</artifactId>
       <version>${version.emf}</version>
+      <scope>test</scope>
     </dependency>
     <!-- Logging -->
     <dependency>
@@ -121,11 +126,13 @@
       <groupId>javax.xml.bind</groupId>
       <artifactId>jaxb-api</artifactId>
       <version>2.3.1</version>
+          <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.glassfish.jaxb</groupId>
       <artifactId>jaxb-runtime</artifactId>
       <version>2.3.3</version>
+          <scope>test</scope>
     </dependency>
   </dependencies>
   <build>
@@ -136,7 +143,7 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.13.0</version>
         <configuration>
-          <release>11</release>
+          <release>17</release>
           <encoding>${project.build.sourceEncoding}</encoding>
         </configuration>
       </plugin>

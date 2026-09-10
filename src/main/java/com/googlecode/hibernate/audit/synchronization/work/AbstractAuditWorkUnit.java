@@ -263,7 +263,7 @@ public abstract class AbstractAuditWorkUnit implements AuditWorkUnit {
                 logicalGroup.setAuditType(auditType);
                 // when we are creating the audit logical group for the first time we set it to 0, this is before even we may have transaction record - this is executed in separate transaction
                 logicalGroup.setLastUpdatedAuditTransactionId(Long.valueOf(0)); 
-                newSession.save(logicalGroup);
+                newSession.persist(logicalGroup);
                 tx.commit();
                 
                 return null;

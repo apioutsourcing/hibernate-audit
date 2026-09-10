@@ -1,6 +1,7 @@
 package com.googlecode.hibernate.audit;
 
 import org.hibernate.boot.Metadata;
+import org.hibernate.boot.spi.BootstrapContext;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.event.service.spi.DuplicationStrategy;
 import org.hibernate.event.service.spi.EventListenerRegistry;
@@ -21,13 +22,15 @@ public class AuditIntegrator implements Integrator {
     private static final String AUTO_REGISTER = "com.googlecode.hibernate.audit.listener.autoRegister";
 
 
-    public void integrate(Metadata metadata, SessionFactoryImplementor sessionFactory, SessionFactoryServiceRegistry serviceRegistry) {
+    @Override
+    public void integrate(Metadata metadata, BootstrapContext bootstrapContext, SessionFactoryImplementor sessionFactory) {
         final Object autoRegister = sessionFactory.getProperties().get(AUTO_REGISTER);
         if (autoRegister != null && !Boolean.parseBoolean((String) autoRegister)) {
             LOG.debug("Skipping HibernateAudit listener auto registration");
             return;
         }
 
+        final SessionFactoryServiceRegistry serviceRegistry = (SessionFactoryServiceRegistry) sessionFactory.getServiceRegistry();
         final EventListenerRegistry listenerRegistry = serviceRegistry.getService(EventListenerRegistry.class);
         listenerRegistry.addDuplicationStrategy(new DuplicationStrategy() {
             public boolean areMatch(Object listener, Object original) {
@@ -58,6 +61,7 @@ public class AuditIntegrator implements Integrator {
         sessionFactory.addObserver(new AuditSessionFactoryObserver(ConfigurationHolder.getAuditConfiguration(sessionFactory)));
     }
 
+    @Override
     public void disintegrate(SessionFactoryImplementor sessionFactory, SessionFactoryServiceRegistry serviceRegistry) {
         AuditListener auditListener = ConfigurationHolder.removeAuditListener(sessionFactory);
         if (auditListener != null) {

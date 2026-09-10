@@ -79,21 +79,21 @@ public class UpdateCollectionAuditWorkUnit extends AbstractCollectionAuditWorkUn
         collectionPersister = ((SessionImplementor) session).getPersistenceContext().getCollectionEntry(persistentCollection).getCurrentPersister();
         this.deletesIterator = persistentCollection.getDeletes(collectionPersister, true);
         Iterator<? extends Object> iterator = persistentCollection.entries(collectionPersister);
-        Type elementType = collectionPersister.getCollectionMetadata().getElementType();
+        Type elementType = collectionPersister.getElementType();
 
         for (int i = 0; iterator.hasNext(); i++) {
             Object element = iterator.next();
 
             if (persistentCollection.needsInserting(element, i, elementType)) {
-                insertIndexes.add(new Integer(i));
+                insertIndexes.add(Integer.valueOf(i));
             } else if (persistentCollection.needsUpdating(element, i, elementType)) {
-                updateIndexes.add(new Integer(i));
+                updateIndexes.add(Integer.valueOf(i));
             }
         }
     }
 
     private void initializeAuditEvents(Session session, AuditConfiguration auditConfiguration) {
-        String role = collectionPersister.getCollectionMetadata().getRole();
+        String role = collectionPersister.getRole();
         String propertyName = role.substring(role.lastIndexOf('.') != -1 ? role.lastIndexOf('.') + 1 : 0, role.length());
 
         if (!auditConfiguration.getExtensionManager().getAuditableInformationProvider().isAuditable(entityName, propertyName) || !persistentCollection.wasInitialized()) {
@@ -122,7 +122,7 @@ public class UpdateCollectionAuditWorkUnit extends AbstractCollectionAuditWorkUn
         updateAuditObject.setTargetEntityId(id == null ? null : id.toString());
         updateAuditEvent.getAuditObjects().add(updateAuditObject);
 
-        Type elementType = collectionPersister.getCollectionMetadata().getElementType();
+        Type elementType = collectionPersister.getElementType();
 
         processUpdates(session, auditConfiguration, propertyName, auditType, insertAuditEvent, updateAuditEvent, insertAuditObject, updateAuditObject, elementType);
 
@@ -138,10 +138,10 @@ public class UpdateCollectionAuditWorkUnit extends AbstractCollectionAuditWorkUn
 
             AuditEvent auditEvent = null;
             EntityAuditObject auditObject = null;
-            if (insertIndexes.contains(new Integer(i))) {
+            if (insertIndexes.contains(Integer.valueOf(i))) {
                 auditEvent = insertAuditEvent;
                 auditObject = insertAuditObject;
-            } else if (updateIndexes.contains(new Integer(i))) {
+            } else if (updateIndexes.contains(Integer.valueOf(i))) {
                 auditEvent = updateAuditEvent;
                 auditObject = updateAuditObject;
             } else {
