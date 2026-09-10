@@ -62,13 +62,7 @@ public class DefaultAuditableInformationProvider implements AuditableInformation
         if (provider != null) {
             return provider.getAuditTypeClassName(metadata, entityName);
         }
-    	PersistentClass classMapping = metadata.getEntityBinding(entityName);
-    	Class mappedClass = classMapping.getMappedClass();
-        
-        if (mappedClass == null) {
-        	mappedClass = classMapping.getProxyInterface();
-        }
-        return mappedClass.getName();
+        return auditTypeClassName(metadata.getEntityBinding(entityName));
     }
     
     
@@ -77,15 +71,23 @@ public class DefaultAuditableInformationProvider implements AuditableInformation
             return provider.getEntityName(metadata, session, auditTypeClassName);
         }
         for (PersistentClass classMapping : metadata.getEntityBindings()) {
-            Class mappedClass = classMapping.getMappedClass();
-            if (mappedClass == null) {
-            	mappedClass = classMapping.getProxyInterface();
-            }
-            if (mappedClass.getName().equals(auditTypeClassName)) {
+            if (auditTypeClassName(classMapping).equals(auditTypeClassName)) {
                 return classMapping.getEntityName();
             }
         }
         return auditTypeClassName;
+    }
+
+    /**
+     * The name an entity is audited under: its mapped class, else its proxy interface, else the entity name
+     * itself for entity-name-only (dynamic-map) mappings, which have no class at all.
+     */
+    private static String auditTypeClassName(PersistentClass classMapping) {
+        Class<?> mappedClass = classMapping.getMappedClass();
+        if (mappedClass == null) {
+            mappedClass = classMapping.getProxyInterface();
+        }
+        return mappedClass != null ? mappedClass.getName() : classMapping.getEntityName();
     }
     
     public String getAuditTypeClassName(Metadata metadata, Type type) {
