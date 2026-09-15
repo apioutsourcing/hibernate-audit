@@ -25,7 +25,6 @@ import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.SessionFactoryObserver;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
-import org.hibernate.internal.SessionFactoryImpl;
 import org.hibernate.mapping.PersistentClass;
 import org.hibernate.mapping.Property;
 import org.hibernate.stat.Statistics;
@@ -71,7 +70,10 @@ public class AuditSessionFactoryObserver implements SessionFactoryObserver {
     }
 
     private void initializeAuditMetatdata(SessionFactory sessionFactory) {
-        final String[] allClassMetadata = ((SessionFactoryImpl) sessionFactory).getMetamodel().getAllEntityNames();
+        final String[] allClassMetadata = ((SessionFactoryImplementor) sessionFactory).getMappingMetamodel()
+                .streamEntityDescriptors()
+                .map(ep -> ep.getEntityName())
+                .toArray(String[]::new);
         if (log.isInfoEnabled()) {
             log.info("Start building audit log metadata.");
         }
@@ -122,7 +124,7 @@ public class AuditSessionFactoryObserver implements SessionFactoryObserver {
             auditType.setLabel(entityName);
             auditType.setType(AuditType.ENTITY_TYPE);
 
-            session.save(auditType);
+            session.persist(auditType);
             updateMetaModel(session);
         }
 
@@ -147,7 +149,7 @@ public class AuditSessionFactoryObserver implements SessionFactoryObserver {
             componentAuditType = new AuditType();
             componentAuditType.setClassName(auditTypeClassName);
             componentAuditType.setType(AuditType.COMPONENT_TYPE);
-            session.save(componentAuditType);
+            session.persist(componentAuditType);
             updateMetaModel(session);
         }
 
@@ -173,7 +175,7 @@ public class AuditSessionFactoryObserver implements SessionFactoryObserver {
             } else {
                 auditType.setType(AuditType.PRIMITIVE_TYPE);
             }
-            session.save(auditType);
+            session.persist(auditType);
             updateMetaModel(session);
         }
 
@@ -216,7 +218,7 @@ public class AuditSessionFactoryObserver implements SessionFactoryObserver {
             }
 
             auditField.setFieldType(auditFieldType);
-            session.save(auditField);
+            session.persist(auditField);
 
             updateMetaModel(session);
         }
